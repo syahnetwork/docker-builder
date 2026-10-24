@@ -69,6 +69,11 @@ jobs:
       - name: Build JAR image using builder
         run: docker build -f Dockerfile.app -t app-jar:latest .
 
+      - name: Download HTML template
+        run: |
+          wget -O html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+          ls -l html.tpl
+
       - name: Scan with HTML report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
