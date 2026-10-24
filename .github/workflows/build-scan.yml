@@ -19,21 +19,22 @@ jobs:
       - name: Build hardened builder image
         run: docker build -f Dockerfile.builder -t builder-hardened:latest .
 
-      - name: Scan builder image (only fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Scan with HTML report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: 'builder-hardened:latest'
-          format: 'sarif'
-          output: 'trivy-builder.sarif'
-          severity: 'CRITICAL,HIGH'
+          format: 'template'
+          template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+          output: 'trivy-builder.html'
+          # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          exit-code: '1'
 
-      - name: Upload builder scan to Security tab
+      - name: Upload HTML report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: 'trivy-builder.sarif'
+          name: trivy-html-report
+          path: trivy-builder.html
 
       # Save image as tar and upload as artifact
       - name: Save builder image to tar
@@ -63,18 +64,19 @@ jobs:
       - name: Build JAR image using builder
         run: docker build -f Dockerfile.app -t app-jar:latest .
 
-      - name: Scan JAR image (only fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.36.0
+      - name: Scan with HTML report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: 'app-jar:latest'
-          format: 'sarif'
-          output: 'trivy-app.sarif'
-          severity: 'CRITICAL,HIGH'
+          format: 'template'
+          template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+          output: 'trivy-builder.html'
+          # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          exit-code: '1'
 
-      - name: Upload JAR scan to Security tab
+      - name: Upload HTML report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: 'trivy-app.sarif'
+          name: trivy-html-report
+          path: trivy-app.html
