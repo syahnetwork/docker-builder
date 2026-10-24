@@ -19,12 +19,17 @@ jobs:
       - name: Build hardened builder image
         run: docker build -f Dockerfile.builder -t builder-hardened:latest .
 
+      - name: Download HTML template
+        run: |
+          wget -O html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+          ls -l html.tpl
+
       - name: Scan with HTML report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: 'builder-hardened:latest'
           format: 'template'
-          template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+          template: '@html.tpl'
           output: 'trivy-builder.html'
           # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
@@ -69,7 +74,7 @@ jobs:
         with:
           image-ref: 'app-jar:latest'
           format: 'template'
-          template: '@$HOME/.local/bin/trivy-bin/contrib/html.tpl'
+          template: '@html.tpl'
           output: 'trivy-builder.html'
           # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
