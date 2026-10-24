@@ -20,7 +20,7 @@ jobs:
         run: docker build -f Dockerfile.builder -t builder-hardened:latest .
 
       - name: Scan builder image (only fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'builder-hardened:latest'
           format: 'sarif'
@@ -64,7 +64,7 @@ jobs:
         run: docker build -f Dockerfile.app -t app-jar:latest .
 
       - name: Scan JAR image (only fixable HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: 'app-jar:latest'
           format: 'sarif'
