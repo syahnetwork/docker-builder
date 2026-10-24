@@ -1,0 +1,80 @@
+name: Build & Scan Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # Job 1: Build hardened builder image, scan, then pass to next job
+  build-builder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build hardened builder image
+        run: docker build -f Dockerfile.builder -t builder-hardened:latest .
+
+      - name: Scan builder image (only fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'builder-hardened:latest'
+          format: 'sarif'
+          output: 'trivy-builder.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Upload builder scan to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-builder.sarif'
+
+      # Save image as tar and upload as artifact
+      - name: Save builder image to tar
+        run: docker save builder-hardened:latest -o builder-image.tar
+
+      - name: Upload builder image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: builder-image
+          path: builder-image.tar
+
+  # Job 2: Load builder image, build JAR, scan JAR image
+  build-jar:
+    needs: build-builder
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download builder image
+        uses: actions/download-artifact@v4
+        with:
+          name: builder-image
+
+      - name: Load builder image
+        run: docker load -i builder-image.tar
+
+      - name: Build JAR image using builder
+        run: docker build -f Dockerfile.app -t app-jar:latest .
+
+      - name: Scan JAR image (only fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'app-jar:latest'
+          format: 'sarif'
+          output: 'trivy-app.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Upload JAR scan to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-app.sarif'
