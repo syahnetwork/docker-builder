@@ -80,7 +80,7 @@ jobs:
           image-ref: 'app-jar:latest'
           format: 'template'
           template: '@html.tpl'
-          output: 'trivy-builder.html'
+          output: 'trivy-app.html'
           # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
@@ -90,3 +90,9 @@ jobs:
         with:
           name: trivy-html-report
           path: trivy-app.html
+
+      - name: Run the JAR 
+        run: |
+          mkdir -p dist
+          docker run --rm -v "$PWD/dist:/out" app-jar:latest
+          java -jar dist/app.jar
