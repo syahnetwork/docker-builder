@@ -24,22 +24,38 @@ jobs:
           wget -O html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
           ls -l html.tpl
 
+      # - name: Scan with HTML report
+      #   uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+      #   with:
+      #     image-ref: 'builder-hardened:latest'
+      #     format: 'template'
+      #     template: '@html.tpl'
+      #     output: 'trivy-builder.html'
+      #     # severity: 'CRITICAL,HIGH'
+      #     ignore-unfixed: true
+
       - name: Scan with HTML report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: 'builder-hardened:latest'
-          format: 'template'
-          template: '@html.tpl'
-          output: 'trivy-builder.html'
+          format: 'sarif'
+          # template: '@html.tpl'
+          output: 'trivy-builder.sarif'
           # severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
-      - name: Upload HTML report
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: trivy-html-report
-          path: trivy-builder.html
+          sarif_file: 'trivy-builder.sarif'
+
+      # - name: Upload HTML report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: trivy-html-report
+      #     path: trivy-builder.html
 
       # Save image as tar and upload as artifact
       - name: Save builder image to tar
