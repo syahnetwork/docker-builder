@@ -4,6 +4,23 @@ This repository contains a GitHub Actions pipeline (`build-scan.yml`) that build
 
 ---
 
+## Tools Used
+
+- **GitHub Actions** — CI platform running the `build-scan.yml` workflow (`ubuntu-latest` runners)
+- **actions/checkout@v4** — checks out the repository in both jobs
+- **Docker** — builds (`docker build`), transfers between jobs (`docker save` / `docker load`), and runs images (`docker run`)
+- **eclipse-temurin:21-jdk-alpine** — base image for the hardened builder (`Dockerfile.builder`)
+- **apk (Alpine package manager)** — package upgrade tooling referenced in the Dockerfiles
+- **javac** (`--release 17`) — compiles `src/main/java/com/example/App.java`
+- **jar** (`--create --main-class`) — packages the compiled classes into `app.jar`
+- **java** (`java -jar dist/app.jar`) — runs the JAR in the final pipeline step
+- **aquasecurity/trivy-action** (pinned to commit `ed142fd…`) — scans `builder-hardened:latest` and `app-jar:latest` images (SARIF and HTML template formats)
+- **wget** — downloads the Trivy `html.tpl` report template from raw.githubusercontent.com
+- **github/codeql-action/upload-sarif@v3** — uploads Trivy SARIF results to the GitHub Security tab
+- **actions/upload-artifact@v4 / actions/download-artifact@v4** — pass the builder image tar and HTML reports between jobs
+
+---
+
 ## 1. Ten Things That Went Wrong
 
 1. **Pinned Trivy action commit caused format confusion.** The workflow pins `aquasecurity/trivy-action@ed142fd...`, but during debugging the scan output format was switched from HTML template to SARIF while the step name still says *"Scan with HTML report"* — misleading naming made the failure hard to diagnose.
